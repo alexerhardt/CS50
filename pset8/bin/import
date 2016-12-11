@@ -1,0 +1,90 @@
+#!/usr/bin/env php
+<?php
+
+// Config file
+require("../includes/config.php"); 
+
+// Check that argument has been provided
+if ($argc !== 2) {
+    echo "Usage: import /path/to/file\n";
+    exit;
+}
+$filepath = $argv[1];
+
+// Check that file exists
+if ( !(file_exists($filepath)) ) {
+    echo "Error. $filepath cannot be accessed or does not exist.";
+    exit;
+}
+
+// Check that file is readable
+if (!is_readable($filepath)) {
+    echo "Error. Cannot read file.\n";
+}
+
+// Open file, warn user if open error
+if (($file = fopen($filepath, "r")) === FALSE) {
+    echo "Error. File could not be opened.\n";
+}
+// Else file opened correctly, let's start working on it
+else {
+    
+    // Establish link to database; needed to escape SQL queries
+    // As seen here: http://php.net/manual/en/function.mysqli-connect.php
+    $link = mysqli_connect("localhost", "alexlearnscs", "zrrJ8zNEdpuTwuty", "pset8");
+    if (!$link) {
+    echo "Error: Unable to connect to MySQL." . PHP_EOL . "\n";
+    echo "Debugging errno: " . mysqli_connect_errno() . PHP_EOL . "\n";
+    echo "Debugging error: " . mysqli_connect_error() . PHP_EOL . "\n";
+    exit;
+    }
+    
+    // Query column names
+    $col_query = CS50::query("SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='pset8' AND `TABLE_NAME`='places'");
+    if($col_query === FALSE) {
+        echo "Error. Column headers could not be retrieved.\n";
+        exit;
+    }
+    
+    // Copy column query into new array
+    $columns = [];
+    for($i = 0; $i < count($col_query); $i++) {
+        $columns[$i] = $col_query[$i]["COLUMN_NAME"];
+    }
+    
+    // Pop the first element from the array (the "id" field, which we don't want)
+    array_shift($columns);
+
+    // Read from open file
+    while( ($data = fgetcsv($file, 0, "\t")) !== FALSE ) {
+    
+        // Insert read data into array
+        // Method seen here: http://stackoverflow.com/questions/10054633/insert-array-into-mysql-database-with-php
+        $columns_str = implode(", ", $columns);
+        $escaped_values = [];
+        for($i = 0; $i < count($data); $i++) {
+            $escaped_values[$i] = mysqli_real_escape_string($link, $data[$i]);
+        }
+
+        // Add quotation marks to the string
+        $values_str  = "\"" . implode("\", \"", $escaped_values) . "\"";
+
+        // Create string with SQL query, then perform query
+        $sql = "INSERT INTO places ($columns_str) VALUES ($values_str)";
+        $sql_in = CS50::query("$sql");
+    
+        // Check for insert errors
+        if($sql_in === FALSE){
+            echo "Error inserting entry into database.\n";
+            mysqli_close($link);
+            fclose($file);
+            exit;
+        }
+    }
+    
+    // Close the db link and the file
+    mysqli_close($link);
+    fclose($file);
+}
+
+?>
