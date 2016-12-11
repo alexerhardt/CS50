@@ -1,0 +1,30 @@
+0.  It's a very long invented word, said to mean a lung disease coming from inhaling fine ash ç
+    and dust.
+1.  It returns usage statistics for a process, its children, or a thread; in speller's case, the former
+2.  16 members
+3.  In this way, the calculate function can operate directly on the values stored on the before
+    and after structs, returning results directly instead of addtional variables (eg, "result")
+4.  The for loop checks the input text character by character, constructing a temporary word when it sees
+    consecutive alphabetical chars (or apostrophes), ignoring sequences of chars that
+    contain numbers or are too long to be words. If it has constructed a sequence of chars
+    that could constitute a word, and detects a non-alphanumerical char in the stream (ex:
+    a space, or maybe even a dash) it "closes" the temp word, increases the word count, and checks 
+    if the word is indeed in the dictionary by calling check. If it's not in the dictionary,
+    it increases the misspelling count.
+5.  fscanf with a format string alone would count words even if they included numbers and
+    other non-alphanum characters.
+6.  Being declared as const, we tell dictionary.c that they shouldn't be modified.
+7.  I implemented a hash table where the size is dependant on the size of the dictionary entered;
+    the number of buckets is equal to the number of words in the dictionary. The table points to 
+    simple nodes structs with the word and a pointer to the next node.
+8.  It was about 2-3ms slower than the staff's on average. 
+9.  I did not make any changes as I felt that improving its speed would require significant
+    design changes - see below.
+10. The biggest challenge I faced was implementing a hash table with an unknown dictionary
+    size. The variable length of the dictionary meant that it was not ideal to determine
+    the size of the hash table with a hard-coded constant in the code. I went for a solution
+    that counted the words in the dictionary to determine the hash table size, which added
+    to the load time significantly. I wish I could have solved this issue more efficiently -
+    I explored solutions like rehashing dynamical but they seemed technically complex and I wasn't certain
+    that they would really work, ie, dev time would have significantly increased with
+    unknown gains in run time.
