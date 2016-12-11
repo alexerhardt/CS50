@@ -1,0 +1,1 @@
+<p>A share of <b><?= $stockinfo["name"] ?></b> (<?= $stockinfo["symbol"] ?>) is priced at <b>$<?= $stockinfo["price"] ?></b></p>
