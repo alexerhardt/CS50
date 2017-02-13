@@ -1,32 +1,3 @@
-/** 
-
-PSEUDOCODE
-
-Include MS common data types
-
-Open infile card.raw
-Create an image counter variable
-Read next block of memory // create a buffer
-    If I'm looking for the first JPEG
-        If first four bytes of buffer match JPEG ID // write a function to check this
-            Switch a flag to found
-            Open an outfile #ID000 // need counter for this, plus way of naming the file according to counter
-            Write block to current outfile
-            Go to #2
-        If first four bytes do not match
-            Go to #2 // = don't do anything
-    If I'm not looking for the first JPEG
-        If first four bytes of buffer match JPEG ID
-            Close previous outfile
-            Add +1 to the file counter
-            Open new outfile
-            Write block to current outfile
-        If first four bytes of buffer do not match JPEG ID
-            Write block to current current outfile
-Close remaining files 
-
-**/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -34,7 +5,7 @@ Close remaining files
 
 #include "defs.h"
 
-// TODO: TYPEDEF 512 AS MAGIC NUMBER
+#define BLOCKSIZE 512
 
 bool jpgChck(BYTE *block);
 
@@ -59,12 +30,10 @@ int main(void) {
     bool found = false;
     
     // Allocate memory for block buffer
-    BYTE* memBlock = malloc ( sizeof(BYTE) * 512 ); 
-    
-    // TODO MAYBE: Create a pointer to the buffer to check the first four bytes
+    BYTE* memBlock = malloc (BLOCKSIZE); 
     
     // Read blocks of memory into buffer TO CHECK - IS THIS SYNTAX OK
-    while (fread(memBlock, sizeof(BYTE) * 512, 1, inptr) == 1)
+    while (fread(memBlock, BLOCKSIZE, 1, inptr) == 1)
     {
         // If still looking for first JPEG
         if (!found)
@@ -74,7 +43,7 @@ int main(void) {
             {
                 found = true;
                 
-                // TODO MAYBE: Looks like all this could be done in a function - DO I NEED TO FREAD AGAIN?
+                // TODO MAYBE: Looks like all this could be done in a function
                 // ALSO NEED TO CHECK IF THERE'S SPACE TO CREATE OUTFILE
                 snprintf (fileName, sizeof( fileName ), "%03d%s", fileCount, extension);
                 outptr = fopen (fileName, "w");
@@ -91,7 +60,6 @@ int main(void) {
                 fclose (outptr);
                 fileCount += 1;
                 
-                // TODO MAYBE: Looks like all this could be done in a function - DO I NEED TO FREAD AGAIN?
                 snprintf (fileName, sizeof( fileName ), "%03d%s", fileCount, extension);
                 outptr = fopen (fileName, "w");
                 fwrite (memBlock, sizeof(BYTE) * 512, 1, outptr);
@@ -103,9 +71,6 @@ int main(void) {
                 fwrite (memBlock, sizeof(BYTE) * 512, 1, outptr);
             }
         }
-        
-        // TODO: Go to next memory block
-        // fseek(inptr, 512, SEEK_CUR);
     }
     
     // Free allocated memory for memory block buffer
